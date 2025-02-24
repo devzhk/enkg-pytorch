@@ -1,0 +1,31 @@
+name: blackhole
+prior: checkpoints/blackhole-50k.pt
+model:
+  _target_: inverse_problems.blackhole.BlackHoleImaging
+  root: ../data/bh-real/measure
+  imsize: 64
+  observation_time_ratio: 1.0
+  noise_type: 'vis_thermal' #'eht' # gaussian, vis_thermal
+  w1: 0
+  w2: 1
+  w3: 1
+  w4: 0.5
+  sigma_noise: 0.0
+  unnorm_scale: 0.5
+  unnorm_shift: 1.0
+
+data:
+  _target_: training.dataset.BlackHole
+  root: ../data/bh-real
+  resolution: 64
+  original_resolution: 64
+  id_list: 0-1
+
+
+evaluator:
+  _target_: inverse_problems.blackhole.BlackHoleEvaluator
+  root: ../data/bh-real/measure
+  observation_time_ratio: 1.0
+  noise_type: 'vis_thermal'
+
+exp_dir: exps/inference/blackhole

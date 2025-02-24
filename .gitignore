@@ -1,0 +1,8 @@
+**/__pycache__/**
+debug*
+exps
+results
+wandb
+outputs
+.vscode
+checkpoints

@@ -1,0 +1,14 @@
+name: DPS_GSG
+method:
+  _target_: algo.dps_gsg.DPS_GSG
+  diffusion_scheduler_config:
+    num_steps: 1000
+    schedule: 'vp'
+    timestep: 'vp'
+    scaling: 'vp'
+  guidance_scale: 0.01
+  num_queries: 1024
+  batch_size: 512
+  mu: 0.01
+  is_central: True
+  sde: True

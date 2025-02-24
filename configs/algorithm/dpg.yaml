@@ -1,0 +1,11 @@
+name: DPG
+method:
+  _target_: algo.dpg.DPG
+  diffusion_scheduler_config:
+    num_steps: 1000
+    schedule: 'vp'
+    timestep: 'vp'
+    scaling: 'vp'
+  guidance_scale: 200
+  num_mc_samples: 5000
+  batch_size: 500
