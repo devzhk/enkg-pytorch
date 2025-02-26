@@ -1,17 +1,28 @@
 name: EnKG
 method:
   _target_: algo.enkg.EnKG
-
-  # For blackhole
-  guidance_scale: 3.5
-  num_updates: 1
+  # For navier-stokes
+  guidance_scale: 2.0
+  num_updates: 2
   num_steps: 80
-  num_samples: 1024
+  num_samples: 2048
   sigma_max: 80.0
   sigma_min: 0.002
-  threshold_end: 0.1
-  threshold_start: 0.1
+  threshold_end: 0.05
+  threshold_start: 0.05
   batch_size: 64
   rho: 7
-  lr_min_ratio: 1e-3
+  lr_min_ratio: 0.0
+  # # For blackhole
+  # guidance_scale: 3.5
+  # num_updates: 1
+  # num_steps: 80
+  # num_samples: 1024
+  # sigma_max: 80.0
+  # sigma_min: 0.002
+  # threshold_end: 0.1
+  # threshold_start: 0.1
+  # batch_size: 64
+  # rho: 7
+  # lr_min_ratio: 1e-3
 
