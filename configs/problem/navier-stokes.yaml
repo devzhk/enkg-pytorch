@@ -11,7 +11,7 @@ model:
 
 data:
   _target_: training.dataset.LMDBData
-  root: ../data/navier-stokes-val/Re200.0-t5.0
+  root: ../data/navier-stokes-test/Re200.0-t5.0
   resolution: 128
   std: 5.0
   id_list: 0-9
