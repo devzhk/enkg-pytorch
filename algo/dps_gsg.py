@@ -4,11 +4,11 @@ from .base import Algo
 from utils.scheduler import Scheduler
 import numpy as np
 
+# -------------------------------------------------------------- #
+# DPS-GSG: DPS with Gaussian Smoothed Gradient estimation
+# Zero-order variant of DPS algorithm that uses gaussian smoothed gradient estimation. See details in the paper appendix.  
 
 class DPS_GSG(Algo):
-    '''
-    Zero-order variant of DPS algorithm that uses gaussian smoothed gradient estimation. 
-    '''
     def __init__(self, 
                  net,
                  forward_op,

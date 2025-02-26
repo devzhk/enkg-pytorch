@@ -6,13 +6,12 @@ import numpy as np
 import wandb
 
 
-class DPG(Algo):
-    
-    '''
-    Diffusion Policy Gradient algorithm proposed by 
-    Tang, Haoyue, et al. "Solving General Noisy Inverse Problem via Posterior Sampling: A Policy Gradient Viewpoint." 
-    '''
-    
+# -------------------------------------------------------------- #
+# DPG: Diffusion Policy Gradient algorithm 
+# proposed in Tang, Haoyue, et al. "Solving General Noisy Inverse Problem via Posterior Sampling: A Policy Gradient Viewpoint." 
+
+
+class DPG(Algo):    
     def __init__(self, 
                  net,
                  forward_op,

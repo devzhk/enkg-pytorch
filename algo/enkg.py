@@ -85,8 +85,11 @@ class EnKG(Algo):
         return x_next
     
     def get_lr(self, i):
-        return self.guidance_scale * (1 - self.lr_min_ratio) * (self.num_steps - i) / self.num_steps + self.lr_min_ratio
-    
+        if self.lr_min_ratio > 0.0:
+            return self.guidance_scale * (1 - self.lr_min_ratio) * (self.num_steps - i) / self.num_steps + self.lr_min_ratio
+        else:
+            return self.guidance_scale
+        
     @torch.no_grad()
     def update_particles(self, particles, observation, num_steps, sigma_start, guidance_scale=1):
         x0s = torch.zeros_like(particles)  # (N, C, H, W), x0 of each particle

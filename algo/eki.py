@@ -60,7 +60,10 @@ class GaussianRF2d(object):
             u += self.mean
         
         return u
-    
+
+# -------------------------------------------------------------- #
+# EKI: Ensemble Kalman Inversion
+# first proposed in Iglesias, Marco A., Kody JH Law, and Andrew M. Stuart. "Ensemble Kalman methods for inverse problems."
 
 class EKI(Algo):
     def __init__(self, net, forward_op, 
