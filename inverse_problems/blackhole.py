@@ -621,44 +621,24 @@ class BlackHoleImaging(BaseOperator):
         data_fit = self.weight_amp * amp_loss + self.weight_cp * cp_loss + self.weight_camp * camp_loss + self.weight_flux * flux_loss
         return data_fit * 2
 
-    # def loss_m(self, yx, y):
-    #     yx_amp, yx_amp_sigma, yx_cp, yx_cphase_sigma, yx_camp, yx_logcamp_sigma, yx_flux = self.decompress(yx)
-    #     y_amp, y_amp_sigma, y_cp, y_cphase_sigma, y_camp, y_logcamp_sigma, y_flux = self.decompress(y)
-    #     amp_loss = self.chi2_amp_from_meas(yx_amp, y_amp, y_amp_sigma)
-    #     cp_loss = self.chi2_cphase_from_meas(yx_cp, y_cp, y_cphase_sigma)
-    #     camp_loss = self.chi2_logcamp_from_meas(yx_camp, y_camp, y_logcamp_sigma)
-    #     flux_loss = self.chi2_flux_from_meas(yx_flux, y_flux)
-
-    #     data_fit = self.weight_amp * amp_loss + self.weight_cp * cp_loss + self.weight_camp * camp_loss + self.weight_flux * flux_loss
-    #     return data_fit * 2
-
-
     def loss_m(self, yx, y):
         yx_amp, yx_amp_sigma, yx_cp, yx_cphase_sigma, yx_camp, yx_logcamp_sigma, yx_flux = self.decompress(yx)
         y_amp, y_amp_sigma, y_cp, y_cphase_sigma, y_camp, y_logcamp_sigma, y_flux = self.decompress(y)
-        # amp_loss = self.chi2_amp_from_meas(yx_amp, y_amp, y_amp_sigma)
-        # cp_loss = self.chi2_cphase_from_meas(yx_cp, y_cp, y_cphase_sigma)
-        # camp_loss = self.chi2_logcamp_from_meas(yx_camp, y_camp, y_logcamp_sigma)
-        # flux_loss = self.chi2_flux_from_meas(yx_flux, y_flux)
-
-        # data_fit =  self.weight_cp * cp_loss + self.weight_camp * camp_loss + self.weight_flux * flux_loss
-
-        cp_loss = torch.mean(torch.abs((yx_cp - y_cp) / y_cphase_sigma) ** 2, dim=(1, 2, 3))
-        camp_loss = torch.mean(torch.abs((yx_camp - y_camp) / y_logcamp_sigma) ** 2, dim=(1, 2, 3))
+ 
+        amp_loss = torch.mean(torch.square((yx_amp - y_amp) / y_amp_sigma), dim=(1, 2, 3))
+        cp_loss = torch.mean(torch.square((yx_cp - y_cp) / y_cphase_sigma), dim=(1, 2, 3))
+        camp_loss = torch.mean(torch.square((yx_camp - y_camp) / y_logcamp_sigma), dim=(1, 2, 3))
         flux_loss = torch.mean(torch.square((yx_flux - y_flux) / 2), dim=(1, 2, 3))
-        
 
-        data_fit = self.weight_cp * cp_loss + self.weight_camp * camp_loss + self.weight_flux * flux_loss
-        return data_fit
-
+        data_fit = self.weight_amp * amp_loss + self.weight_cp * cp_loss + self.weight_camp * camp_loss + self.weight_flux * flux_loss
+        return data_fit * 2
+    
 
 class BlackHoleEvaluator(Evaluator):
     def __init__(self, root='dataset/blackhole', device='cuda', imsize=64, observation_time_ratio=1.0, noise_type='vis_thermal'):
         metric_list = {'cp_chi2': None, 'camp_chi2': None, 'psnr': None, 'blur_psnr (f=10)': None,
-                       'cp_chi2_all':None, 'camp_chi2_all':None, 'psnr_all':None,
                        'blur_psnr (f=15)': None,
-                       'blur_psnr (f=20)': None,
-                       'max_psnr': None, 'max_blur_psnr (f=10)': None, 'max_blur_psnr (f=15)': None, 'max_blur_psnr (f=20)': None}
+                       'blur_psnr (f=20)': None}
         super().__init__(metric_list)
         self.op = BlackHoleImaging(root=root, imsize=imsize, device=device, observation_time_ratio=observation_time_ratio, noise_type=noise_type)
         self.device = device
@@ -678,33 +658,25 @@ class BlackHoleEvaluator(Evaluator):
 
         # blurry PSNR
         blur_factors = [10, 15, 20]
-        max_batch = 10
-        blur_psnr = []
-        for i in range(0, pred.shape[0], max_batch):
-            metric_dict_batch = self.op.evaluate_psnr(target[i:i + max_batch], pred[i:i + max_batch], blur_factors)
-            blur_psnr.append(metric_dict_batch)
-            # print(metric_dict_batch[0])
-        blur_psnr = torch.cat(blur_psnr, dim=0)
 
+        MAX_BATCH_SIZE = 32
+        blur_psnr_all = []
+        for i in range(0, pred.shape[0], MAX_BATCH_SIZE):
+            pred_batch = pred[i:i + MAX_BATCH_SIZE]
+            target_batch = target[i:i + MAX_BATCH_SIZE]
+            blur_psnr = self.op.evaluate_psnr(target_batch, pred_batch, blur_factors)
+            blur_psnr_all.append(blur_psnr)
+
+        blur_psnr = torch.cat(blur_psnr_all, dim=0)
         # blur_psnr = self.op.evaluate_psnr(target, pred, blur_factors)
-        blur_psnr_mean = blur_psnr.mean(dim=0)
-        metric_dict['cp_chi2_all'] = chisq_cp
-        metric_dict['camp_chi2_all'] = chisq_logcamp
-        metric_dict['psnr_all'] = blur_psnr_mean
+        blur_psnr = blur_psnr.max(dim=0)[0]
 
         metric_dict['cp_chi2'] = chisq_cp.min().item()
         metric_dict['camp_chi2'] = chisq_logcamp.min().item()
-        metric_dict['psnr'] = blur_psnr_mean[0].item()
-        metric_dict['blur_psnr (f=10)'] = blur_psnr_mean[1].item()
-        metric_dict['blur_psnr (f=15)'] = blur_psnr_mean[2].item()
-        metric_dict['blur_psnr (f=20)'] = blur_psnr_mean[3].item()
-
-        # max
-        metric_dict['max_psnr'] = blur_psnr[:, 0].max().item()
-        metric_dict['max_blur_psnr (f=10)'] = blur_psnr[:, 1].max().item()
-        metric_dict['max_blur_psnr (f=15)'] = blur_psnr[:, 2].max().item()
-        metric_dict['max_blur_psnr (f=20)'] = blur_psnr[:, 3].max().item()
-
+        metric_dict['psnr'] = blur_psnr[0].item()
+        metric_dict['blur_psnr (f=10)'] = blur_psnr[1].item()
+        metric_dict['blur_psnr (f=15)'] = blur_psnr[2].item()
+        metric_dict['blur_psnr (f=20)'] = blur_psnr[3].item()
 
         self.metric_state['cp_chi2'] += metric_dict['cp_chi2']
         self.metric_state['camp_chi2'] += metric_dict['camp_chi2']
@@ -712,8 +684,4 @@ class BlackHoleEvaluator(Evaluator):
         self.metric_state['blur_psnr (f=10)'] += metric_dict['blur_psnr (f=10)']
         self.metric_state['blur_psnr (f=15)'] += metric_dict['blur_psnr (f=15)']
         self.metric_state['blur_psnr (f=20)'] += metric_dict['blur_psnr (f=20)']
-        self.metric_state['max_psnr'] += metric_dict['max_psnr']
-        self.metric_state['max_blur_psnr (f=10)'] += metric_dict['max_blur_psnr (f=10)']
-        self.metric_state['max_blur_psnr (f=15)'] += metric_dict['max_blur_psnr (f=15)']
-        self.metric_state['max_blur_psnr (f=20)'] += metric_dict['max_blur_psnr (f=20)']
         return metric_dict

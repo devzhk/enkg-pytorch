@@ -5,12 +5,10 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
-import torchvision.transforms.functional as TF
 
 from utils.helper import parse_int_list
 from pathlib import Path
 from PIL import Image
-import ehtim as eh
 
 
 class ImageFolder(Dataset):
